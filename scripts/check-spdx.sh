@@ -3,7 +3,7 @@
 # Rust source must declare ours. CertifiedCopy's AGPL code is read for behaviour, never copied.
 set -euo pipefail
 status=0
-if git grep -nIiE 'SPDX-License-Identifier:.*\b(A?GPL|LGPL)' -- ':!scripts/check-spdx.sh'; then
+if git grep -nIiE 'SPDX-License-Identifier:.*GPL' -- ':!scripts/check-spdx.sh'; then
   echo "::error::a file names a GPL-family licence in its SPDX header"
   status=1
 fi
