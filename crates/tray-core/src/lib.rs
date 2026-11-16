@@ -9,6 +9,7 @@
 pub mod autostart;
 pub mod canonical;
 pub mod discover;
+pub mod handshake;
 pub mod logs;
 pub mod manifest;
 pub mod model;

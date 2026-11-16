@@ -118,3 +118,9 @@ impl Verifier {
         Ok(tab)
     }
 }
+
+/// The absolute path of a verified `linux_exec` (which may start with `~/.local/`) for the user
+/// whose home is `home`: the one expansion the verifier and the Linux install check share.
+pub fn linux_exec_path(path: &str, home: &str) -> Result<String, Refusal> {
+    crate::verify_paths::expand_home(path, home)
+}

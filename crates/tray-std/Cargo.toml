@@ -1,0 +1,16 @@
+[package]
+name = "tray-std"
+version = "0.1.0"
+description = "The std-backed adapters for tray-core's ports that every Avarok tray host shares: the tab directory on disk, the Linux install check, the clock, agent processes and the panel-token handshake."
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+# Part of the host, never published: its path dependencies stay paths.
+publish = false
+
+[dependencies]
+tray-core = { path = "../tray-core" }
+
+[lints]
+workspace = true

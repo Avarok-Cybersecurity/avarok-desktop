@@ -1,0 +1,31 @@
+[package]
+name = "tray-ffi"
+version = "0.1.0"
+description = "The thin C ABI the macOS Avarok app (Swift) calls: verified tabs as CBOR, the pinned publishers, and the panel URL from a handshake line."
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+# Part of the host, never published: its path dependencies stay paths.
+publish = false
+
+[lib]
+# staticlib for the Swift host and TrayKit's tests; rlib so the safe core is tested in Rust.
+crate-type = ["staticlib", "rlib"]
+
+[dependencies]
+tray-core = { path = "../tray-core" }
+tray-std = { path = "../tray-std" }
+ciborium = { version = "0.2.2", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+serde_json = { version = "1", default-features = false, features = ["std"] }
+
+# Not the workspace lints: the workspace forbids unsafe, and a C ABI cannot be written without
+# it. Here it is denied everywhere and allowed in src/abi.rs alone, each block with its reason.
+[lints.rust]
+unsafe_code = "deny"
+missing_debug_implementations = "warn"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }

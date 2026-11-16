@@ -156,7 +156,7 @@ fn linux_exec(path: &str) -> Result<(), Refusal> {
 }
 
 /// The absolute path of an already-checked `linux_exec` for the user whose home is `home`.
-fn expand_home(path: &str, home: &str) -> Result<String, Refusal> {
+pub(crate) fn expand_home(path: &str, home: &str) -> Result<String, Refusal> {
     let Some(rest) = path.strip_prefix(HOME_PREFIX) else {
         return Ok(path.to_owned());
     };

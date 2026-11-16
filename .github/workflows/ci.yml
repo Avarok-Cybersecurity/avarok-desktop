@@ -31,6 +31,12 @@ jobs:
       # rust-toolchain.toml pins 1.99.0 with rustfmt and clippy; this installs exactly that.
       - name: Install the pinned toolchain
         run: rustup toolchain install && rustup show
+      # tray-host's tray icon and web panels on Linux: GTK 3, WebKitGTK 4.1, the app indicator.
+      - name: Linux GUI libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev
       - name: File length (at most 250 lines)
         run: scripts/check-file-length.sh
       - name: SPDX headers (no AGPL/GPL)
@@ -47,3 +53,26 @@ jobs:
           tool: cargo-deny@0.19.0
       - name: Licences, bans, sources and advisories
         run: cargo deny --locked check
+
+  traykit:
+    name: TrayKit and Avarok.app (macOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the pinned toolchain
+        run: rustup toolchain install && rustup show
+      # The minimum macOS is Info.plist's, read rather than restated.
+      - name: tray-ffi static library
+        run: |
+          MACOSX_DEPLOYMENT_TARGET="$(plutil -extract LSMinimumSystemVersion raw apps/macos/Info.plist)" \
+            cargo build -p tray-ffi --release --locked
+      - name: Swift package
+        working-directory: TrayKit
+        run: swift build
+      # The harness opens windows and a popover and reads the real activation policy; the hosted
+      # macOS runners have a logged-in GUI session for it.
+      - name: XCTest harness
+        working-directory: TrayKit
+        run: swift test
+      - name: Avarok.app (swiftc, unsigned)
+        run: apps/macos/build.sh

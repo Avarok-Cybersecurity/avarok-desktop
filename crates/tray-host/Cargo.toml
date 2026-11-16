@@ -1,0 +1,29 @@
+[package]
+name = "tray-host"
+version = "0.1.0"
+description = "The Avarok tray host for Windows and Linux: tray-icon and muda for the menu, wry for web panels, tray-core for every decision."
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+# Part of the host, never published: its path dependencies stay paths.
+publish = false
+
+[[bin]]
+name = "avarok"
+path = "src/main.rs"
+
+[dependencies]
+tray-core = { path = "../tray-core" }
+tray-std = { path = "../tray-std" }
+# The menu comes from tray-icon's own muda (tray_icon::menu), so the two can never disagree on
+# version. libxdo (predefined Linux items) is not used.
+tray-icon = { version = "0.21", default-features = false }
+tao = "0.37"
+wry = "0.57"
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+serde_json = { version = "1", default-features = false, features = ["std"] }

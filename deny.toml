@@ -16,6 +16,11 @@ allow = [
     "Unicode-3.0",
     "Zlib",
     "CC0-1.0",
+    # File-level copyleft, compatible with distributing an MIT OR Apache-2.0 work: an unmodified
+    # MPL file stays MPL, nothing else is affected. Needed by the Windows/Linux host only (wry's
+    # dom_query -> cssparser/selectors/dtoa-short; tray-icon's dirs -> option-ext); no crate of
+    # ours is MPL and no MPL source is copied here. Not GPL-family, which stays banned.
+    "MPL-2.0",
 ]
 confidence-threshold = 0.93
 unused-allowed-license = "allow"
@@ -35,3 +40,9 @@ unknown-git = "deny"
 
 [advisories]
 yanked = "deny"
+ignore = [
+    # proc-macro-error (unmaintained, no vulnerability) is a build-time macro dependency of
+    # glib-macros 0.18, i.e. of gtk-rs 0.18, which tray-icon 0.21 and wry use on Linux. It goes
+    # when those move to a newer gtk-rs; it never ships in a binary.
+    { id = "RUSTSEC-2024-0370", reason = "build-time macro of gtk-rs 0.18 (tray-icon/wry on Linux)" },
+]

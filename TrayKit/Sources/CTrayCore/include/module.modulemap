@@ -1,0 +1,5 @@
+module CTrayCore {
+    header "tray_core.h"
+    link "tray_ffi"
+    export *
+}
