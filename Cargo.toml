@@ -1,0 +1,16 @@
+[workspace]
+resolver = "3"
+members = ["crates/tray-core"]
+
+[workspace.package]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Avarok-Cybersecurity/avarok-desktop"
+rust-version = "1.99.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }

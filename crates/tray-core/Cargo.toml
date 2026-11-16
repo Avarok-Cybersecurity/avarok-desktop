@@ -1,0 +1,25 @@
+[package]
+name = "tray-core"
+version = "0.1.0"
+description = "The portable model behind the Avarok tray host: tabs, menus, agent supervision, tab-manifest and update verification. Every OS call sits behind a port."
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+# ML-DSA-65 (FIPS 204) publisher signatures; the version citadel_pqcrypto uses.
+ml-dsa = { version = "0.1.2", default-features = false, features = ["alloc"] }
+sha3 = { version = "0.11", default-features = false }
+ciborium = { version = "0.2.2", default-features = false, features = ["std"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", default-features = false, features = ["std"] }
+base64 = { version = "0.22", default-features = false, features = ["alloc"] }
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+sha3 = { version = "0.11", default-features = false }
+ml-dsa = { version = "0.1.2", default-features = false, features = ["alloc"] }
