@@ -5,8 +5,10 @@
 //! Only strictly newer versions are offered: a validly signed old manifest cannot downgrade.
 
 use crate::manifest::{AppSection, Publisher};
+use crate::model::TabId;
 use crate::ports::{CodeSignature, PortError};
 use crate::signature::{self, SignedRefusal, TrustedPublishers};
+use crate::update_rules;
 use serde::Deserialize;
 use sha3::{Digest, Sha3_256};
 use std::fmt;
@@ -18,10 +20,12 @@ pub const MAX_UPDATE_MANIFEST_BYTES: u64 = 64 * 1024;
 pub struct Version(pub u32, pub u32, pub u32);
 
 impl Version {
-    /// `major.minor.patch`, digits only: there are no pre-release builds on the feed.
+    /// `major.minor.patch`, digits only, no leading zero: there are no pre-release builds on
+    /// the feed, and one version has one spelling.
     pub fn parse(text: &str) -> Option<Self> {
         let mut parts = text.split('.').map(|p| {
-            (!p.is_empty() && p.len() <= 9 && p.bytes().all(|b| b.is_ascii_digit()))
+            let canonical = p == "0" || !p.starts_with('0');
+            (canonical && !p.is_empty() && p.len() <= 9 && p.bytes().all(|b| b.is_ascii_digit()))
                 .then(|| p.parse().ok())
                 .flatten()
         });
@@ -39,7 +43,7 @@ impl fmt::Display for Version {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Asset {
-    /// A Rust target triple, such as `aarch64-apple-darwin`.
+    /// `<os>-<arch>`, such as `macos-aarch64`, `windows-x86_64` or `linux-x86_64`.
     pub target: String,
     pub url: String,
     pub sha3_256: String,
@@ -106,33 +110,33 @@ pub fn check(
     if m.format != FORMAT {
         return Err(UpdateRefusal::Malformed(format!("format {}", m.format)));
     }
+    if TabId::parse(&m.product).is_none() {
+        return Err(UpdateRefusal::Malformed(format!(
+            "product {:?} is not a reverse-DNS id",
+            m.product
+        )));
+    }
     if m.product != product {
         return Err(UpdateRefusal::WrongProduct(m.product));
     }
     let version = Version::parse(&m.version).ok_or(UpdateRefusal::BadVersion(m.version))?;
+    // Every field is checked before the version decides anything: a malformed feed is refused
+    // even when it offers nothing new, so a publisher's mistake is visible on every host.
+    update_rules::https(&m.notes_url)?;
+    update_rules::assets(&m.assets)?;
     if version <= current {
         return Ok(UpdateDecision::UpToDate);
     }
-    https(&m.notes_url)?;
     let asset = m
         .assets
         .into_iter()
         .find(|a| a.target == target)
         .ok_or(UpdateRefusal::NoAssetForTarget)?;
-    https(&asset.url)?;
     Ok(UpdateDecision::Available {
         version,
         notes_url: m.notes_url,
         asset,
     })
-}
-
-fn https(url: &str) -> Result<(), UpdateRefusal> {
-    let ok = url.len() > "https://".len()
-        && url.starts_with("https://")
-        && url.bytes().all(|b| b.is_ascii_graphic());
-    ok.then_some(())
-        .ok_or_else(|| UpdateRefusal::NotHttps(url.to_owned()))
 }
 
 /// The downloaded bytes are the ones the publisher signed for.
@@ -145,7 +149,7 @@ pub fn verify_download(asset: &Asset, bytes: &[u8]) -> Result<(), UpdateRefusal>
         });
     }
     let digest = hex::encode(Sha3_256::digest(bytes));
-    if digest != asset.sha3_256.to_ascii_lowercase() {
+    if digest != asset.sha3_256 {
         return Err(UpdateRefusal::DigestMismatch);
     }
     Ok(())

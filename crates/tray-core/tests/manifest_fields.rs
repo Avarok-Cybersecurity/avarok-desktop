@@ -15,6 +15,10 @@ fn linux_paths_outside_the_install_roots_are_refused() {
         "/home/ada/.localx/bin",
         "usr/bin/x",
         "/home/bob/.local/bin/x",
+        "/home/ada/.local/bin/cc",
+        "~/.localx/bin",
+        "~/.local/../x",
+        "~/x",
     ] {
         let got = verdict(linux(), |d| d["app"]["linux_exec"] = json!(path));
         assert_eq!(
@@ -23,10 +27,12 @@ fn linux_paths_outside_the_install_roots_are_refused() {
             "{path}"
         );
     }
-    assert!(
+    assert_eq!(
         verdict(linux(), |d| d["app"]["linux_exec"] =
-            json!("/home/ada/.local/bin/cc"))
-        .is_ok()
+            json!("~/.local/bin/cc")),
+        Ok(tray_core::model::Program::LinuxExec {
+            path: "/home/ada/.local/bin/cc".to_owned()
+        })
     );
 }
 
@@ -154,5 +160,18 @@ fn an_unknown_format_and_an_out_of_range_cap_are_refused() {
     for cap in [0, 11] {
         let got = verdict(Platform::MacOs, |d| d["agent"]["crash_cap"] = json!(cap));
         assert!(matches!(got.unwrap_err(), Refusal::BadField(_)), "{cap}");
+    }
+}
+
+#[test]
+fn half_a_platform_is_refused_on_every_host() {
+    for platform in [Platform::MacOs, Platform::Windows, linux()] {
+        let got = verdict(platform.clone(), |d| {
+            d["app"].as_object_mut().unwrap().remove("macos_team_id");
+        });
+        assert!(
+            matches!(got.unwrap_err(), Refusal::IncompleteApp(_)),
+            "{platform:?}"
+        );
     }
 }

@@ -11,11 +11,11 @@ use tray_core::update::{
 };
 
 const BUILD: &[u8] = b"the new build";
-const TARGET: &str = "aarch64-apple-darwin";
+const TARGET: &str = "macos-aarch64";
 
 fn feed(version: &str) -> Value {
     json!({
-        "format": 1, "product": "avarok-desktop", "version": version,
+        "format": 1, "product": "net.avarok.desktop", "version": version,
         "notes_url": "https://avarok.net/desktop/releases",
         "assets": [{ "target": TARGET, "url": "https://downloads.avarok.net/Avarok.dmg",
                      "sha3_256": hex::encode(Sha3_256::digest(BUILD)), "size": BUILD.len() }]
@@ -28,7 +28,7 @@ fn decide(doc: Value, context: &str) -> Result<UpdateDecision, UpdateRefusal> {
     check(
         &bytes(&signed),
         &avarok.trusted(),
-        "avarok-desktop",
+        "net.avarok.desktop",
         Version(0, 1, 0),
         TARGET,
     )
@@ -80,7 +80,7 @@ fn a_feed_signed_by_a_stranger_is_refused() {
     let got = check(
         &bytes(&signed),
         &Publisher::avarok().trusted(),
-        "avarok-desktop",
+        "net.avarok.desktop",
         Version(0, 1, 0),
         TARGET,
     );
@@ -99,12 +99,12 @@ fn plain_http_another_product_and_bad_versions_are_refused() {
         Err(UpdateRefusal::NotHttps(_))
     ));
     let mut other = feed("0.2.0");
-    other["product"] = json!("certifiedcopy");
+    other["product"] = json!("net.avarok.certifiedcopy");
     assert!(matches!(
         decide(other, UPDATE_MANIFEST_CONTEXT),
         Err(UpdateRefusal::WrongProduct(_))
     ));
-    for v in ["0.2", "0.2.0-beta", "v0.2.0", "0.2.0.1", "+1.0.0"] {
+    for v in ["0.2", "0.2.0-beta", "v0.2.0", "0.2.0.1", "+1.0.0", "0.02.0"] {
         assert!(
             matches!(
                 decide(feed(v), UPDATE_MANIFEST_CONTEXT),
@@ -114,7 +114,7 @@ fn plain_http_another_product_and_bad_versions_are_refused() {
         );
     }
     let mut none = feed("0.2.0");
-    none["assets"][0]["target"] = json!("x86_64-pc-windows-msvc");
+    none["assets"][0]["target"] = json!("windows-x86_64");
     assert_eq!(
         decide(none, UPDATE_MANIFEST_CONTEXT),
         Err(UpdateRefusal::NoAssetForTarget)

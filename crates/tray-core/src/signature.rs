@@ -62,15 +62,21 @@ pub struct PinnedPublisher {
 pub struct TrustedPublishers(Vec<PinnedPublisher>);
 
 impl TrustedPublishers {
-    /// `(name, key hex)` pairs. At least one, each a valid ML-DSA-65 key.
+    /// `(name, key hex)` pairs. At least one, each a valid ML-DSA-65 key in lowercase hex, the
+    /// one spelling a manifest may use (contract: 3904 lowercase hex characters).
     pub fn new(pinned: &[(&str, &str)]) -> Result<Self, SignedRefusal> {
         if pinned.is_empty() {
             return Err(SignedRefusal::NoPinnedPublishers);
         }
         let parse = |(name, hex): &(&str, &str)| {
+            if hex.bytes().any(|b| b.is_ascii_uppercase()) {
+                return Err(SignedRefusal::MalformedKey(
+                    "it is not lowercase hex".to_owned(),
+                ));
+            }
             Ok(PinnedPublisher {
                 name: (*name).to_owned(),
-                key_hex: hex.to_ascii_lowercase(),
+                key_hex: (*hex).to_owned(),
                 key: parse_key(hex)?,
             })
         };
@@ -86,8 +92,8 @@ impl TrustedPublishers {
         Self::new(&pinned)
     }
 
+    /// An exact match: a key spelled any other way than the pinned lowercase hex is foreign.
     fn find(&self, key_hex: &str) -> Option<&PinnedPublisher> {
-        let key_hex = key_hex.to_ascii_lowercase();
         self.0.iter().find(|p| p.key_hex == key_hex)
     }
 }

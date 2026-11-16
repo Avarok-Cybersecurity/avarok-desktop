@@ -121,3 +121,23 @@ fn a_host_with_no_pinned_publishers_refuses_to_build_its_trust_list() {
 fn the_shipped_host_trusts_the_minted_avarok_key() {
     assert!(tray_core::signature::TrustedPublishers::avarok().is_ok());
 }
+
+#[test]
+fn a_pinned_key_spelled_in_uppercase_is_not_the_pinned_key() {
+    let mut doc = Publisher::avarok().sign(manifest_doc(ID), TAB_MANIFEST_CONTEXT);
+    let upper = doc["publisher"]["mldsa65_public_key"]
+        .as_str()
+        .unwrap()
+        .to_ascii_uppercase();
+    doc["publisher"]["mldsa65_public_key"] = json!(upper);
+    let got = verifier(Platform::MacOs).verify(FILE, &bytes(&doc), &OS_OK);
+    assert_eq!(
+        got.unwrap_err(),
+        Refusal::Signature(SignedRefusal::ForeignPublisher)
+    );
+    let pinned = Publisher::avarok().key_hex().to_ascii_uppercase();
+    assert!(matches!(
+        tray_core::signature::TrustedPublishers::new(&[("Avarok Cybersecurity", &pinned)]),
+        Err(SignedRefusal::MalformedKey(_))
+    ));
+}

@@ -46,6 +46,8 @@ pub enum Refusal {
     BadField(String),
     NotLoopback(String),
     NoAppForPlatform,
+    /// The manifest names no complete platform, or only half of one.
+    IncompleteApp(String),
     CodeSignature(String),
 }
 
@@ -74,6 +76,7 @@ impl fmt::Display for Refusal {
                 write!(f, "the panel {url:?} is not this tab's loopback port")
             }
             Self::NoAppForPlatform => f.write_str("it names no app for this platform"),
+            Self::IncompleteApp(why) => write!(f, "its app section is incomplete: {why}"),
             Self::CodeSignature(why) => write!(f, "the app it names failed the OS check: {why}"),
         }
     }

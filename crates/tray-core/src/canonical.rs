@@ -12,6 +12,8 @@ use std::fmt;
 pub enum CanonicalError {
     /// Manifests carry integers only; a float has more than one encoding.
     Float,
+    /// An absent optional field is absent; `null` would give one field two signed spellings.
+    Null,
     NotAnObject,
     Encode(String),
 }
@@ -20,6 +22,7 @@ impl fmt::Display for CanonicalError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Float => f.write_str("a number is not an integer"),
+            Self::Null => f.write_str("a field is null; an absent field must be left out"),
             Self::NotAnObject => f.write_str("the manifest is not a JSON object"),
             Self::Encode(why) => write!(f, "it could not be encoded as CBOR: {why}"),
         }
@@ -41,7 +44,7 @@ pub fn signed_bytes(object: &Json, omit: &str) -> Result<Vec<u8>, CanonicalError
 
 fn to_cbor(value: &Json) -> Result<Cbor, CanonicalError> {
     Ok(match value {
-        Json::Null => Cbor::Null,
+        Json::Null => return Err(CanonicalError::Null),
         Json::Bool(b) => Cbor::Bool(*b),
         Json::Number(n) => match (n.as_u64(), n.as_i64()) {
             (Some(u), _) => Cbor::Integer(u.into()),

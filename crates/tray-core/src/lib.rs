@@ -18,6 +18,7 @@ pub mod single_instance;
 pub mod supervise;
 pub mod tabs;
 pub mod update;
+mod update_rules;
 pub mod verify;
 mod verify_paths;
 mod verify_rules;

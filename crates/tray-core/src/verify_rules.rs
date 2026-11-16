@@ -15,6 +15,7 @@ const MAX_ARG_CHARS: usize = 1024;
 const MAX_FRAGMENT_CHARS: usize = 256;
 const MAX_MODULE_CHARS: usize = 64;
 const LOWEST_AGENT_PORT: u16 = 1024;
+const MAX_URL_CHARS: usize = 1024;
 
 pub(crate) fn tab(m: &TabManifest, file_name: &str, platform: &Platform) -> Result<Tab, Refusal> {
     let id = TabId::parse(&m.id).ok_or_else(|| Refusal::BadId(m.id.clone()))?;
@@ -112,8 +113,9 @@ fn panel(p: &PanelSection, agent_port: u16) -> Result<PanelSpec, Refusal> {
     match p {
         PanelSection::Web { url, token } => {
             let origin = format!("http://127.0.0.1:{agent_port}");
-            let path = url
-                .strip_prefix(&origin)
+            let path = (url.len() <= MAX_URL_CHARS)
+                .then_some(url.as_str())
+                .and_then(|url| url.strip_prefix(&origin))
                 .filter(|path| path.starts_with('/'))
                 .filter(|path| {
                     path.bytes()
