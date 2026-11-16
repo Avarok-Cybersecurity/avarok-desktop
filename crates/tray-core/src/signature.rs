@@ -16,9 +16,9 @@ pub const PUBLIC_KEY_LEN: usize = 1952;
 pub const SIGNATURE_LEN: usize = 3309;
 
 /// Avarok's tab and update publisher keys (hex, 1952 bytes each), shipped with the host. Only
-/// these may register tabs (owner decision D-C). Empty until the owner mints the key: an empty
-/// list is refused, so a host built before then trusts nothing rather than everything.
-pub const AVAROK_PUBLISHER_KEYS: &[&str] = &[];
+/// these may register tabs (owner decision D-C). Each key lives in `keys/` as the one copy; its
+/// private seed never enters this repository.
+pub const AVAROK_PUBLISHER_KEYS: &[&str] = &[include_str!("../keys/avarok-tab-publisher.pub")];
 pub const AVAROK_PUBLISHER_NAME: &str = "Avarok Cybersecurity";
 
 #[derive(Debug, Clone, PartialEq, Eq)]

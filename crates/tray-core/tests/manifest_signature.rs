@@ -116,3 +116,8 @@ fn a_host_with_no_pinned_publishers_refuses_to_build_its_trust_list() {
         SignedRefusal::NoPinnedPublishers
     );
 }
+
+#[test]
+fn the_shipped_host_trusts_the_minted_avarok_key() {
+    assert!(tray_core::signature::TrustedPublishers::avarok().is_ok());
+}
